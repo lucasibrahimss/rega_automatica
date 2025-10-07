@@ -1,1 +1,0 @@
-# rega_automatica
