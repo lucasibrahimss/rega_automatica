@@ -40,7 +40,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     btnRegar.addEventListener('click', () => {
-        client.publish(TOPIC_ESCRITA, 'regar');
+        // MODIFICADO: Agora vamos pegar a senha e montar um JSON
+        const senhaInput = document.getElementById('senha');
+        const senhaDigitada = senhaInput.value;
+    
+        if (!senhaDigitada) {
+            alert('Por favor, digite a senha!');
+            return; // Para a execução se a senha estiver vazia
+        }
+    
+        const payload = {
+            comando: 'regar',
+            senha: senhaDigitada
+        };
+        
+        // Convertemos o objeto para uma string no formato JSON
+        const mensagem = JSON.stringify(payload);
+    
+        client.publish(TOPIC_ESCRITA, mensagem);
         alert('Comando para regar enviado!');
     });
 });

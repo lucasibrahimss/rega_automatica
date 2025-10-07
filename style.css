@@ -67,3 +67,13 @@ header h2 {
 #btn-regar:active {
     transform: scale(0.98);
 }
+
+#senha {
+    display: block;
+    margin: 0 auto 15px auto; /* Centraliza e adiciona espaço abaixo */
+    padding: 10px;
+    width: 75%;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    text-align: center;
+}
