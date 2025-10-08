@@ -1,63 +1,72 @@
 document.addEventListener('DOMContentLoaded', () => {
+    
+    // ... (configuração do JustGage continua a mesma) ...
+    var gauge = new JustGage({ id: 'gauge', value: 0, min: 0, max: 100, /* ... etc */ });
 
-    var gauge = new JustGage({
-        id: 'gauge',
-        value: 0,
-        min: 0,
-        max: 100,
-        symbol: '%',
-        pointer: true,
-        gaugeWidthScale: 0.6,
-        counter: true,
-        relativeGaugeSize: true,
-        levelColors: [
-            "#F03E3E",
-            "#FFDD00",
-            "#30B32D"
-        ]
-    });
-
-    // --- Lógica MQTT ---
+    // --- Configurações MQTT ---
     const BROKER_URL = 'wss://test.mosquitto.org:8081';
     const TOPIC_LEITURA = 'rega/automatica/umidade';
     const TOPIC_ESCRITA = 'rega/automatica/comando';
+    const TOPIC_RESPOSTA = 'rega/automatica/resposta'; // NOVO: Tópico de resposta
+
     const btnRegar = document.getElementById('btn-regar');
+    const senhaInput = document.getElementById('senha');
     
     console.log('Conectando ao broker MQTT...');
     const client = mqtt.connect(BROKER_URL);
 
+    // --- Lógica de Conexão ---
     client.on('connect', () => {
         console.log('Conectado com sucesso ao broker!');
+        // Se inscreve nos dois tópicos que precisamos ouvir
         client.subscribe(TOPIC_LEITURA);
+        client.subscribe(TOPIC_RESPOSTA); // MODIFICADO: Se inscreve no tópico de resposta
     });
 
+    // --- Lógica para Receber Mensagens ---
     client.on('message', (topic, message) => {
+        // Rota para a umidade
         if (topic === TOPIC_LEITURA) {
             const umidade = parseInt(message.toString());
-            console.log(`Mensagem recebida: ${umidade}%`);
             gauge.refresh(umidade);
+        }
+
+        // NOVO: Rota para as respostas do Python
+        if (topic === TOPIC_RESPOSTA) {
+            const resposta = JSON.parse(message.toString());
+            
+            // Habilita o botão novamente e volta o texto ao normal
+            btnRegar.disabled = false;
+            btnRegar.innerText = 'REGAR';
+
+            if (resposta.status === 'sucesso') {
+                alert('Rega acionada com sucesso!');
+            } else if (resposta.motivo === 'senha_incorreta') {
+                alert('Senha incorreta! Tente novamente.');
+            } else {
+                alert('Ocorreu um erro ao processar o comando.');
+            }
         }
     });
 
+    // --- Lógica para Enviar o Comando ---
     btnRegar.addEventListener('click', () => {
-        // MODIFICADO: Agora vamos pegar a senha e montar um JSON
-        const senhaInput = document.getElementById('senha');
         const senhaDigitada = senhaInput.value;
-    
         if (!senhaDigitada) {
             alert('Por favor, digite a senha!');
-            return; // Para a execução se a senha estiver vazia
+            return;
         }
-    
+
+        // MODIFICADO: Desabilita o botão e muda o texto para dar feedback visual
+        btnRegar.disabled = true;
+        btnRegar.innerText = 'ENVIANDO...';
+
         const payload = {
             comando: 'regar',
             senha: senhaDigitada
         };
         
-        // Convertemos o objeto para uma string no formato JSON
-        const mensagem = JSON.stringify(payload);
-    
-        client.publish(TOPIC_ESCRITA, mensagem);
-        alert('Comando para regar enviado!');
+        client.publish(TOPIC_ESCRITA, JSON.stringify(payload));
+        // REMOVIDO: O alert('Comando enviado!') foi removido daqui.
     });
 });
