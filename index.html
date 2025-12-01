@@ -1,38 +1,132 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rega Automática</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rega Automática</title>
+
+  <!-- Fonte bonita -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Chart.js para o histórico de umidade -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+  <div class="app">
+    <header class="app-header">
+      <h1 class="app-title">REGA AUTOMÁTICA</h1>
+    </header>
 
-    <div class="container">
-        <header>
-            <h1>REGA AUTOMÁTICA</h1>
-            <h2>DO TOMATE</h2>
-        </header>
-        <main>
-            <div id="gauge-label">Nível de Umidade Atual</div>
-            <div id="gauge"></div>
-            
-        </main>
-        <footer>
-            <input type="password" id="senha" placeholder="Digite a senha">
-            <button id="btn-regar">REGAR</button>
-        </footer>
-    </div>
+    <nav class="app-nav">
+      <button class="nav-btn active" data-target="view-current">
+        Umidade Atual
+      </button>
+      <button class="nav-btn" data-target="view-history-humidity">
+        Histórico de Umidade
+      </button>
+      <button class="nav-btn" data-target="view-history-irrigation">
+        Histórico de Rega
+      </button>
+    </nav>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.3.0/raphael.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/justgage/1.6.1/justgage.min.js"></script>
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-    
-    <script src="script.js"></script>
+    <main class="app-main">
+      <!-- Tela 1: Umidade Atual -->
+      <section id="view-current" class="view active">
+        <h2 class="view-title">Nível de Umidade Atual</h2>
+
+        <div class="card gauge-card">
+          <div class="gauge-wrapper">
+            <!-- Gauge em SVG -->
+            <svg class="gauge" viewBox="0 0 200 100">
+              <!-- fundo -->
+              <path
+                class="gauge-arc-bg"
+                d="M10 100 A90 90 0 0 1 190 100"
+                fill="none"
+              />
+              <!-- arco colorido -->
+              <path
+                class="gauge-arc"
+                d="M10 100 A90 90 0 0 1 190 100"
+                fill="none"
+              />
+              <!-- marca central -->
+              <circle class="gauge-center" cx="100" cy="100" r="8" />
+              <!-- ponteiro -->
+              <line
+                id="gauge-needle"
+                class="gauge-needle"
+                x1="100" y1="100"
+                x2="100" y2="22"
+              />
+            </svg>
+
+            <div class="gauge-value">
+              <span id="humidity-value">--</span>%
+            </div>
+          </div>
+        </div>
+
+        <form class="card action-card" id="rega-form">
+          <label class="input-label" for="password">Digite a senha</label>
+          <input
+            id="password"
+            class="input-control"
+            type="password"
+            placeholder="********"
+            autocomplete="off"
+          />
+
+          <button type="submit" class="btn btn-primary btn-large">
+            REGAR
+          </button>
+
+          <p id="rega-feedback" class="feedback-text"></p>
+        </form>
+      </section>
+
+      <!-- Tela 2: Histórico de Umidade -->
+      <section id="view-history-humidity" class="view">
+        <h2 class="view-title">Histórico de Umidade</h2>
+
+        <div class="card">
+          <canvas id="humidity-chart"></canvas>
+        </div>
+      </section>
+
+      <!-- Tela 3: Histórico de Rega -->
+      <section id="view-history-irrigation" class="view">
+        <h2 class="view-title">Histórico de Rega</h2>
+
+        <div class="card table-card">
+          <div class="table-wrapper">
+            <table class="styled-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Hora</th>
+                  <th>Origem</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="rega-table-body">
+                <!-- preenchido via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <small>Projeto de Sistemas Embutidos · Rega Automática do Tomate</small>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>

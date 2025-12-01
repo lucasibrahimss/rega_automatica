@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rega Automática - Versão Estável</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { margin: 0; font-family: 'Poppins', sans-serif; background-color: #EAF2E3; color: #333; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 380px; padding: 20px; box-sizing: border-box; text-align: center; display: flex; flex-direction: column; justify-content: space-around; height: 90vh; }
+        header h1 { font-size: 2.2rem; margin: 0; color: #3A5A40; }
+        header h2 { font-size: 1.8rem; margin: -10px 0 20px 0; font-weight: 400; color: #588157; }
+        
+        /* Ajustes para a nova biblioteca */
+        #gauge { width: 320px; height: 260px; margin: 0 auto; }
+        #gauge-label { font-size: 1rem; color: #555; }
+
+        #btn-regar { width: 80%; padding: 20px; margin-top: 20px; font-size: 1.5rem; font-weight: 700; color: white; background-color: #E63946; border: none; border-radius: 15px; cursor: pointer; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); transition: background-color 0.3s, transform 0.1s; }
+        #btn-regar:hover { background-color: #D62839; }
+        #btn-regar:active { transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>REGA AUTOMÁTICA</h1>
+            <h2>DO TOMATE</h2>
+        </header>
+        <main>
+            <div id="gauge"></div>
+            <div id="gauge-label">Nível de Umidade Atual</div>
+        </main>
+        <footer>
+            <button id="btn-regar">REGAR</button>
+        </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.3.0/raphael.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/justgage/1.6.1/justgage.min.js"></script>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // MUDANÇA 3: Nova configuração para a biblioteca JustGage
+            var gauge = new JustGage({
+                id: 'gauge', // O id do <div> que criamos
+                value: 0,
+                min: 0,
+                max: 100,
+                symbol: '%',
+                pointer: true,
+                gaugeWidthScale: 0.6,
+                counter: true,
+                relativeGaugeSize: true,
+                levelColors: [
+                    "#F03E3E", // Vermelho (seco)
+                    "#FFDD00", // Amarelo (atenção)
+                    "#30B32D"  // Verde (úmido)
+                ]
+            });
+
+            // --- Lógica MQTT (quase idêntica) ---
+            const BROKER_URL = 'wss://test.mosquitto.org:8081';
+            const TOPIC_LEITURA = 'rega/automatica/umidade';
+            const TOPIC_ESCRITA = 'rega/automatica/comando';
+            const btnRegar = document.getElementById('btn-regar');
+            
+            console.log('Conectando ao broker MQTT...');
+            const client = mqtt.connect(BROKER_URL);
+
+            client.on('connect', () => {
+                console.log('Conectado com sucesso ao broker!');
+                client.subscribe(TOPIC_LEITURA);
+            });
+
+            client.on('message', (topic, message) => {
+                if (topic === TOPIC_LEITURA) {
+                    const umidade = parseInt(message.toString());
+                    console.log(`Mensagem recebida: ${umidade}%`);
+                    
+                    // MUDANÇA 4: A forma de atualizar o valor mudou para .refresh()
+                    gauge.refresh(umidade);
+                }
+            });
+
+            btnRegar.addEventListener('click', () => {
+                client.publish(TOPIC_ESCRITA, 'regar');
+                alert('Comando para regar enviado!');
+            });
+        });
+    </script>
+</body>
+</html>
