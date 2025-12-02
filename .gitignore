@@ -1,0 +1,7 @@
+# Ignore all files except app.js, index.html, and style.css
+*
+!.gitignore
+!app.js
+!index.html
+!style.css
+!*/
